@@ -32,11 +32,13 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 public class VideoRecorderService extends Service {
     // Class constants
@@ -106,6 +108,7 @@ public class VideoRecorderService extends Service {
     public void onCreate() {
         super.onCreate();
         mMediaRecorder = new MediaRecorder();
+
         mWindowManager = (WindowManager) this.getSystemService(Context.WINDOW_SERVICE);
     }
 
@@ -201,7 +204,10 @@ public class VideoRecorderService extends Service {
                     StreamConfigurationMap map = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                     int deviceOrientation = mWindowManager.getDefaultDisplay().getRotation();
                     mTotalRotation = sensorToDeviceRotation(cameraCharacteristics, deviceOrientation);
-                    mVideoSize = chooseOptimalSize(map.getOutputSizes(MediaRecorder.class));
+                    mVideoSize = Arrays.stream(Objects.requireNonNull(cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP))
+                            .getOutputSizes(MediaRecorder.class))
+                            .min(Comparator.comparingInt(a -> a.getHeight() * a.getWidth()))
+                            .get();
                     mCameraId = cameraId;
                     return;
                 }
@@ -220,7 +226,7 @@ public class VideoRecorderService extends Service {
             Log.e(TAG, "Failed to connect to camera.");
             Toast.makeText(
                     getApplicationContext(),
-                    "Connection to camera failed. Make sure you have granted camera permissions to the app or the camera is not in use.",
+                    "Conexão com a câmera falhou.  Verifique se você concedeu permissões de câmera e tente novamente.",
                     Toast.LENGTH_SHORT
             ).show();
             destroyServiceOnException();
@@ -231,6 +237,7 @@ public class VideoRecorderService extends Service {
         try {
             setupMediaRecorder();
             Surface recordSurface = mMediaRecorder.getSurface();
+
             mCaptureRequestBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
             mCaptureRequestBuilder.addTarget(recordSurface);
@@ -278,11 +285,11 @@ public class VideoRecorderService extends Service {
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mMediaRecorder.setOutputFile(mVideoFileName);
-        mMediaRecorder.setVideoEncodingBitRate(10000000);
+        mMediaRecorder.setVideoEncodingBitRate(250_00);
         mMediaRecorder.setVideoFrameRate(30);
         mMediaRecorder.setVideoSize(mVideoSize.getWidth(), mVideoSize.getHeight());
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
         mMediaRecorder.setOrientationHint(mTotalRotation);
         mMediaRecorder.prepare();
     }

@@ -68,7 +68,7 @@ public class FlutterBackgroundVideoRecorderPlugin extends BroadcastReceiver impl
 
   private int mRecordingStatus = STATUS_STOPPED;
 
-  private boolean showInfoToast = true;
+  private boolean showInfoToast = false;
 
   // Handles service connection events
   private final ServiceConnection mConnection = new ServiceConnection() {
@@ -113,6 +113,8 @@ public class FlutterBackgroundVideoRecorderPlugin extends BroadcastReceiver impl
 
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
+    Log.d(TAG, "Method call received: " + call.method);
+
     switch (call.method) {
       case "getRecordingStatus":
         result.success(mRecordingStatus);
@@ -122,6 +124,7 @@ public class FlutterBackgroundVideoRecorderPlugin extends BroadcastReceiver impl
           checkPermissions();
           if (hasRecordingPermissions()) {
             startVideoRecordingService(call);
+            Log.i(TAG, "Gravação iniciada");
             result.success(true);
           } else {
             Log.i(TAG, "Permissions not satisfied.");
@@ -324,6 +327,7 @@ public class FlutterBackgroundVideoRecorderPlugin extends BroadcastReceiver impl
   public void onReceive(Context context, Intent intent) {
     String message = intent.getStringExtra("msg");
     String code = intent.getStringExtra("code");
+
     if (showInfoToast) {
       Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show();
     }
@@ -331,18 +335,34 @@ public class FlutterBackgroundVideoRecorderPlugin extends BroadcastReceiver impl
     switch (code) {
       case "RECORDING":
         mRecordingStatus = STATUS_RECORDING;
+        if (mEventSink == null) {
+          Log.i(TAG, "Event sink is null");
+          return;
+        }
         mEventSink.success(STATUS_RECORDING);
         break;
       case "STOPPED":
         mRecordingStatus = STATUS_STOPPED;
+        if (mEventSink == null) {
+          Log.i(TAG, "Event sink is null");
+          return;
+        }
         mEventSink.success(STATUS_STOPPED);
         break;
       case "INITIALIZING":
         mRecordingStatus = STATUS_INITIALIZING;
+        if (mEventSink == null) {
+          Log.i(TAG, "Event sink is null");
+          return;
+        }
         mEventSink.success(STATUS_INITIALIZING);
         break;
       case "EXCEPTION":
         mRecordingStatus = STATUS_EXCEPTION;
+        if (mEventSink == null) {
+          Log.i(TAG, "Event sink is null");
+          return;
+        }
         mEventSink.success(STATUS_EXCEPTION);
         Toast.makeText(mContext, "An exception occurred in recording service", Toast.LENGTH_SHORT).show();
         break;
