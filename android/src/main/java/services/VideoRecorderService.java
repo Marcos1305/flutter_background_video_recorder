@@ -238,8 +238,7 @@ public class VideoRecorderService extends Service {
             setupMediaRecorder();
             Surface recordSurface = mMediaRecorder.getSurface();
 
-            mCaptureRequestBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
+            mCaptureRequestBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
             mCaptureRequestBuilder.addTarget(recordSurface);
             mCameraDevice.createCaptureSession(
                     Collections.singletonList(recordSurface),
@@ -283,14 +282,19 @@ public class VideoRecorderService extends Service {
     private void setupMediaRecorder() throws IOException {
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+
         mMediaRecorder.setOutputFile(mVideoFileName);
-        mMediaRecorder.setVideoEncodingBitRate(250_00);
-        mMediaRecorder.setVideoFrameRate(30);
-        mMediaRecorder.setVideoSize(mVideoSize.getWidth(), mVideoSize.getHeight());
+
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
         mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-        mMediaRecorder.setOrientationHint(mTotalRotation);
+
+        mMediaRecorder.setVideoSize(mVideoSize.getWidth(), mVideoSize.getHeight());
+
+        mMediaRecorder.setVideoFrameRate(30);
+        mMediaRecorder.setVideoEncodingBitRate(250_000);
+
         mMediaRecorder.prepare();
     }
 
@@ -340,9 +344,9 @@ public class VideoRecorderService extends Service {
     private static Size chooseOptimalSize(Size[] choices) {
         List<Size> sizes = new ArrayList<>();
         for (Size option: choices) {
-            if (option.getHeight() == option.getWidth() * 1080 / 1920
-                    && option.getWidth() >= 1920
-                    && option.getHeight() >= 1080) {
+            if (option.getHeight() == option.getWidth() * 480 / 640
+                    && option.getWidth() >= 640
+                    && option.getHeight() >= 480) {
                 sizes.add(option);
             }
         }
