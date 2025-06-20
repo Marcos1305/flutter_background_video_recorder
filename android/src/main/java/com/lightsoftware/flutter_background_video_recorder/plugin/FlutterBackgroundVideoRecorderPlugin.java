@@ -124,16 +124,9 @@ public class FlutterBackgroundVideoRecorderPlugin extends BroadcastReceiver impl
         break;
       case "startVideoRecording":
         if (mRecordingStatus == STATUS_STOPPED) {
-          checkPermissions();
-          if (hasRecordingPermissions()) {
-            startVideoRecordingService(call);
-            Log.i(TAG, "Gravação iniciada");
-            result.success(true);
-          } else {
-            Log.i(TAG, "Permissions not satisfied.");
-            configurationCall = call;
-            result.success(false);
-          }
+          startVideoRecordingService(call);
+          Log.i(TAG, "Gravação iniciada");
+          result.success(true);
         } else {
           result.error(Integer.toString(10), "Recording in progress", "Recording already in progress");
         }
